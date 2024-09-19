@@ -54,12 +54,15 @@ numpy = [
     { version = "^1.24.4", python = "<3.9" },
 ]
 
+web3 = "^7.2.0"
+eth-account = "^0.13.3"
+langchain = "^0.2.16"
+haystack = "^0.42"
 [tool.poetry.group.tests]
 optional = true
 
 [tool.poetry.group.tests.dependencies]
 openai = "^1.11.1"
-langchain = "^0.1.5"
 llama-index = "^0.10.45"
 tenacity = "8.3.0"          # pin until fixed https://github.com/langchain-ai/langchain/issues/22972
 transformers = "^4.30.1"

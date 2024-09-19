@@ -267,6 +267,7 @@ class CodeSettings:
     module: Any = None
     # Bunch of callbacks defined by the developer
     password_auth_callback: Optional[Callable[[str, str], Optional["User"]]] = None
+    wallet_auth_callback: Optional[Callable[[str, str, str], Optional["User"]]] = None
     header_auth_callback: Optional[Callable[[Headers], Optional["User"]]] = None
     oauth_callback: Optional[
         Callable[[str, str, Dict[str, str], "User"], Optional["User"]]

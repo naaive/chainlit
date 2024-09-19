@@ -21,8 +21,6 @@ if TYPE_CHECKING:
     from chainlit.openai import instrument_openai
     from chainlit.mistralai import instrument_mistralai
 
-from literalai import ChatGeneration, CompletionGeneration, GenerationMessage
-
 import chainlit.input_widget as input_widget
 from chainlit.action import Action
 from chainlit.cache import cache
@@ -60,9 +58,30 @@ from chainlit.user import PersistedUser, User
 from chainlit.user_session import user_session
 from chainlit.utils import make_module_getattr, wrap_user_function
 from chainlit.version import __version__
+from literalai import ChatGeneration, CompletionGeneration, GenerationMessage
 
 if env_found:
     logger.info("Loaded .env file")
+
+
+@trace
+def wallet_auth_callback(func: Callable[[str], Optional[User]]) -> Callable:
+    """
+    Framework agnostic decorator to authenticate the user using a wallet address.
+
+    Args:
+        func (Callable[[str], Optional[User]]): The authentication callback to execute. Takes the wallet address as a parameter.
+
+    Example:
+        @cl.wallet_auth_callback
+        async def wallet_auth_callback(wallet_address: str) -> Optional[User]:
+
+    Returns:
+        Callable[[str], Optional[User]]: The decorated authentication callback.
+    """
+
+    config.code.wallet_auth_callback = wrap_user_function(func)
+    return func
 
 
 @trace
@@ -409,6 +428,7 @@ __all__ = [
     "on_settings_update",
     "password_auth_callback",
     "header_auth_callback",
+    "wallet_auth_callback",
     "sleep",
     "run_sync",
     "make_async",

@@ -149,6 +149,11 @@ export class ChainlitAPI extends APIBase {
     return res.json();
   }
 
+  async walletConnect(data: any) {
+    const res = await this.post(`/auth/wallet`, data);
+    return res.json();
+  }
+
   async logout() {
     const res = await this.post(`/logout`, {});
     return res.json();

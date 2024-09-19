@@ -1,4 +1,8 @@
-import { useState } from 'react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import React, { useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
+
+import { useAuth } from '@chainlit/react-client';
 
 import UserAvatar from './avatar';
 import UserMenu from './menu';
@@ -12,9 +16,17 @@ export default function UserButton() {
   const handleClose = () => {
     setAnchorEl(null);
   };
+  const { isConnected } = useAccount();
+  const { logout } = useAuth();
 
+  useEffect(() => {
+    if (!isConnected) {
+      logout();
+    }
+  }, [isConnected]);
   return (
     <>
+      <ConnectButton />
       <UserAvatar
         onClick={handleClick}
         aria-controls={open ? 'account-menu' : undefined}

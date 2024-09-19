@@ -8,6 +8,8 @@ from typing import Any, Optional, Union
 
 from chainlit.oauth_providers import get_oauth_provider
 from chainlit.secret import random_secret
+from eth_account import Account
+from eth_account.messages import encode_defunct
 
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
@@ -215,7 +217,6 @@ app.mount(
     name="copilot",
 )
 
-
 # -------------------------------------------------------------------------------
 #                               SLACK HANDLER
 # -------------------------------------------------------------------------------
@@ -351,6 +352,57 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         form_data.username, form_data.password
     )
 
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="credentialssignin",
+        )
+    access_token = create_jwt(user)
+    if data_layer := get_data_layer():
+        try:
+            await data_layer.create_user(user)
+        except Exception as e:
+            logger.error(f"Error creating user: {e}")
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
+
+
+def verify_signature(message, signature, address):
+    # Encode the message
+    message = encode_defunct(text=message)
+
+    # Recover the address from the signature
+    recovered_address = Account.recover_message(message, signature=signature)
+
+    # Compare the recovered address with the provided address
+    return recovered_address.lower() == address.lower()
+
+
+@router.post("/auth/wallet")
+async def wallet_auth(request: Request):
+    if not config.code.wallet_auth_callback:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No auth_callback defined"
+        )
+    request_data = await request.json()
+
+    address = request_data.get("address")
+    ens_name = request_data.get("ensName")
+    message = request_data.get("message")
+    signature = request_data.get("signature")
+
+    if not all([address, message, signature]):
+        raise HTTPException(status_code=400, detail="Missing data in request")
+
+    if not verify_signature(message, signature, address):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
+        )
+
+    user = await config.code.wallet_auth_callback(address, ens_name)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

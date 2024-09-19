@@ -45,6 +45,27 @@ export default function Login() {
     }
   };
 
+  const handleWalletConnect = async (
+    address: string,
+    ensName: string,
+    message: string,
+    signature: string,
+    callbackUrl: string
+  ) => {
+    try {
+      const json = await apiClient.walletConnect({
+        address,
+        ensName,
+        message,
+        signature
+      });
+      setAccessToken(json.access_token);
+      navigate(callbackUrl);
+    } catch (error: any) {
+      setError(error.message);
+    }
+  };
+
   useEffect(() => {
     setError(query.get('error') || '');
   }, [query]);
@@ -71,6 +92,7 @@ export default function Login() {
       callbackUrl="/"
       providers={config?.oauthProviders || []}
       onPasswordSignIn={config?.passwordAuth ? handlePasswordLogin : undefined}
+      onWalletConnect={config?.walletAuth ? handleWalletConnect : undefined}
       onOAuthSignIn={async (provider: string) => {
         window.location.href = apiClient.getOAuthEndpoint(provider);
       }}

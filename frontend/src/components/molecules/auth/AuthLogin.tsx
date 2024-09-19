@@ -1,8 +1,11 @@
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useFormik } from 'formik';
-import React, { useEffect, useState } from 'react';
+import { debounce } from 'lodash';
+import React, { useCallback, useEffect, useState } from 'react';
 import PasswordChecklist, { RuleNames } from 'react-password-checklist';
 import { grey } from 'theme/palette';
 import { useToggle } from 'usehooks-ts';
+import { useAccount, useEnsName, useSignMessage } from 'wagmi';
 import * as yup from 'yup';
 
 import Visibility from '@mui/icons-material/Visibility';
@@ -32,6 +35,13 @@ type AuthLoginProps = {
     password: string,
     callbackUrl: string
   ) => Promise<any>;
+  onWalletConnect?: (
+    address: string,
+    ensName: string,
+    message: string,
+    signature: string,
+    callbackUrl: string
+  ) => Promise<any>;
   onOAuthSignIn?: (provider: string, callbackUrl: string) => Promise<any>;
   onSignUp?: (
     email: string,
@@ -54,6 +64,7 @@ const AuthLogin = ({
   providers,
   callbackUrl,
   onPasswordSignIn,
+  onWalletConnect,
   onOAuthSignIn,
   onForgotPassword,
   onSignUp,
@@ -121,6 +132,37 @@ const AuthLogin = ({
     },
     validateOnBlur: true
   });
+  const { address } = useAccount();
+  const { data: ensName } = useEnsName({ address });
+  const { signMessageAsync } = useSignMessage();
+  const debouncedConnectWallet = useCallback(
+    debounce(async () => {
+      if (address && onWalletConnect) {
+        try {
+          const message = 'Please sign this message to log in.';
+          const signature = await signMessageAsync({ message });
+          await onWalletConnect(
+            address,
+            ensName || '',
+            message,
+            signature,
+            callbackUrl
+          );
+        } catch (err) {
+          console.error('Error signing message:', err);
+          setErrorState('Failed to sign message');
+        }
+      }
+    }, 1000),
+    [address, onWalletConnect, signMessageAsync, callbackUrl, ensName]
+  );
+
+  useEffect(() => {
+    debouncedConnectWallet();
+    return () => {
+      debouncedConnectWallet.cancel();
+    };
+  }, [debouncedConnectWallet]);
 
   return (
     <AuthTemplate title={title} renderLogo={renderLogo}>
@@ -133,6 +175,11 @@ const AuthLogin = ({
         </Alert>
       ) : null}
 
+      {onWalletConnect ? (
+        <Stack direction="column" alignItems="center" gap={0.5} marginTop={1}>
+          <ConnectButton />
+        </Stack>
+      ) : null}
       {onPasswordSignIn ? (
         <form onSubmit={formik.handleSubmit}>
           <TextInput

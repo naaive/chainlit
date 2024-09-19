@@ -14,6 +14,7 @@ export const useAuth = () => {
     requireLogin: boolean;
     passwordAuth: boolean;
     headerAuth: boolean;
+    walletAuth: boolean;
     oauthProviders: string[];
   }>('/auth/config');
   const [accessToken, setAccessToken] = useRecoilState(accessTokenState);
