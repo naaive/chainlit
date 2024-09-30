@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useRecoilState } from 'recoil';
+import { useDisconnect } from 'wagmi';
 
 import DarkModeOutlined from '@mui/icons-material/DarkModeOutlined';
 import KeyIcon from '@mui/icons-material/Key';
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export default function UserMenu({ anchorEl, open, handleClose }: Props) {
+  const { disconnect } = useDisconnect();
   const { user, logout } = useAuth();
   const [settings, setSettings] = useRecoilState(settingsState);
   const { config } = useConfig();
@@ -87,6 +89,7 @@ export default function UserMenu({ anchorEl, open, handleClose }: Props) {
       key="logout"
       onClick={() => {
         logout();
+        disconnect();
         handleClose();
       }}
     >

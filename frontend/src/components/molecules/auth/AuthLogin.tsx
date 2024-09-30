@@ -153,7 +153,7 @@ const AuthLogin = ({
           setErrorState('Failed to sign message');
         }
       }
-    }, 1000),
+    }, 1200),
     [address, onWalletConnect, signMessageAsync, callbackUrl, ensName]
   );
 
